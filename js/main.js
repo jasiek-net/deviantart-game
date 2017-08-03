@@ -1,6 +1,8 @@
 window['left'] = window.location.hash === '' ? '' : window.location.hash.split('!')[0].split('#')[1];
 window['right'] = window.location.hash === '' ? '6artificial6' : window.location.hash.split('!')[1];
 
+const SLIDE_LIMIT = 25;
+
 resetGame()
 
 function resetGame() {
@@ -84,7 +86,7 @@ function runGame() {
         `<div class="like"></div>` +
         `</li>`)
 
-      var len = u1.length + u2.length < 50 ? u1.length + u2.length : 50;
+      var len = u1.length + u2.length < SLIDE_LIMIT ? u1.length + u2.length : SLIDE_LIMIT;
       var result = image(krzysztof, 'last');
       for (let i = 0; i < len; i++) {
         const numb = Math.floor(Math.random() * 2) + 1
