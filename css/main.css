@@ -1,0 +1,13 @@
+.container {
+  max-width: 600px;
+  min-width: 320px;
+  margin: auto;
+  position: relative;
+}
+
+.spinner {
+  position: absolute;
+  left: calc(50% - 20px);
+  top: calc(50% - 20px);
+  margin: 0;
+}
