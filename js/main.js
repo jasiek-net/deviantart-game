@@ -35,6 +35,14 @@ function resetGame() {
   counter_bad = 0;
 }
 
+function gameOver() {
+  let score = Math.floor(counter_good / (counter_bad + counter_good) * 100)
+  alert(`Game Over, your score: ${score}%!\nClick to play again!`);
+  bar.animate(0);
+  resetGame()
+  runGame()
+}
+
 function changeUser(e) {
   e.preventDefault();
   var name = prompt("Enter nickname of deviant or leave empty to set random photos")
@@ -132,15 +140,6 @@ function runGame() {
     right_user = '';
     runGame();
   })
-}
-
-
-function gameOver() {
-  let score = Math.floor(counter_good / (counter_bad + counter_good) * 100)
-  alert(`Game Over, your score: ${score}%!\nClick to play again!`);
-  bar.animate(0);
-  resetGame()
-  runGame()
 }
 
 function runTinder() {
