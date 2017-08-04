@@ -1,7 +1,7 @@
 [DEMO](http://jonzee.me/deviantart-game)
 
 ### Instructions
-On mobile you swipe photos to left or right, on desktop use arrows (left/right) to swipe. To change user, click on profile picture and provide a nickname.
+On mobile you swipe photos to left or right, on desktop use arrows (left/right) or mouse to swipe. To change user, click on profile picture and provide a nickname.
 
 ### Foundation
 I talked with my brother about photography business. He claimed that his friends is one of the best photographer and his photos are just amazing. I was trying to find out what makes his friend outstanding.
