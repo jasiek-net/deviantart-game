@@ -1,14 +1,38 @@
-window['left'] = window.location.hash === '' ? '' : window.location.hash.split('!')[0].split('#')[1];
-window['right'] = window.location.hash === '' ? '6artificial6' : window.location.hash.split('!')[1];
-
+const DEFAULT_USER = '6artificial6';
+const EMPTY_GALLERY = '<div class="spinner"><div class="double-bounce1"></div><div class="double-bounce2"></div></div>';
 const SLIDE_LIMIT = 25;
 
-resetGame()
+// Initialization
+var left_user = window.location.hash === '' ? '' : window.location.hash.split('!')[0].split('#')[1];
+var right_user = window.location.hash === '' ? DEFAULT_USER : window.location.hash.split('!')[1];
+var counter_good = 0;
+var counter_bad = 0;
+
+// API requests
+const yahoo_req = (url, callback) => `http://query.yahooapis.com/v1/public/yql?q=${encodeURIComponent('select * from xml where url="' + url + '"')}&_maxage=86400&format=json&callback=${callback}`;
+const deviant_req = (user) => user !== '' ? `http://backend.deviantart.com/rss.xml?type=deviation&q=by:${user}` : 'http://backend.deviantart.com/rss.xml?sort:time';
+const DEVIANT_LOGO = 'http://img13.deviantart.net/2777/i/2016/260/e/5/logo__14___the_deviantart_logo_by_octss-dahwy98.png';
+
+// Listeners
+$('.actions .dislike').on('click', changeUser);
+$('.actions .like').on('click', changeUser);
+$(document).keydown(function(e) {
+  switch(e.which) {
+    // left
+    case 37: return $("#tinderslide").jTinder('dislike');
+    // right
+    case 39: return $("#tinderslide").jTinder('like');
+    // exit this handler for other keys
+    default: return;
+  }
+  // prevent the default action (scroll / move caret)
+  e.preventDefault();
+});
 
 function resetGame() {
-  $('#gallery').html('<div class="spinner"><div class="double-bounce1"></div><div class="double-bounce2"></div></div>')
-  window['counter_good'] = 0;
-  window['counter_bad'] = 0;
+  $('#gallery').html(EMPTY_GALLERY);
+  counter_good = 0;
+  counter_bad = 0;
 }
 
 function changeUser(e) {
@@ -16,19 +40,16 @@ function changeUser(e) {
   var name = prompt("Enter nickname of deviant or leave empty to set random photos")
   if (name === null) { return null }
   resetGame();
-  if (e.target.className === 'btn-like') { window['right'] = name }
-  if (e.target.className === 'btn-dislike') { window['left'] = name }
-  window.location.hash = window['left'] + '!' + window['right'];
+  if (e.target.className === 'btn-like') { right_user = name }
+  if (e.target.className === 'btn-dislike') { left_user = name }
+  window.location.hash = left_user + '!' + right_user;
   runGame();
 }
-
-$('.actions .dislike').on('click', changeUser);
-$('.actions .like').on('click', changeUser);
 
 function photos(url) {
   return new Promise((res, rej) => {
     var s = document.createElement('script');
-    s.src = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent('select * from xml where url="' + url + '"') + "&_maxage=86400&format=json&callback=callback";
+    s.src = yahoo_req(url, 'callback');
     document.body.appendChild(s);
     window['callback'] = callback;
     function callback(feed) {
@@ -60,67 +81,55 @@ function photos(url) {
   })
 }
 
-var userUrl = (user) =>
-  user !== ''
-  ? `http://backend.deviantart.com/rss.xml?type=deviation&q=by:${user}`
-  : 'http://backend.deviantart.com/rss.xml?sort:time'
+function image(image, number) {
+  return `
+  <li class="${number}">
+    <div class="img" style="background: url('${image}') no-repeat scroll center center; background-size: contain"></div>
+    <div class="dislike"></div>
+    <div class="like"></div>
+  </li>`;
+}
 
 function runGame() {
-  var right = userUrl(window['right'])
-  var left = userUrl(window['left'])
+  photos(deviant_req(right_user))
+  .then(photo_right => {
+    photos(deviant_req(left_user))
+    .then(photo_left => {
+      const right_profile = right_user !== '' ? photo_right.shift().image : DEVIANT_LOGO;
+      const left_profile = left_user !== '' ? photo_left.shift().image : DEVIANT_LOGO;
 
-  photos(right)
-  .then(photo1 => {
-    photos(left)
-    .then(photo2 => {
-      const logo = 'http://img13.deviantart.net/2777/i/2016/260/e/5/logo__14___the_deviantart_logo_by_octss-dahwy98.png'
-      var rightP = window['right'] !== '' ? photo1.shift().image : logo;
-      var leftP = window['left'] !== '' ? photo2.shift().image : logo;
+      const pr = shuffle(photo_right);
+      const pl = shuffle(photo_left);
 
-      const u1 = shuffle(photo1);
-      const u2 = shuffle(photo2);
-      const krzysztof = rightP;
-      const image = (img, numb) => (`<li class="${numb}">` +
-        `<div class="img" style="background: url('${img}') no-repeat scroll center center; background-size: contain"></div>` +
-        `<div class="dislike"></div>` +
-        `<div class="like"></div>` +
-        `</li>`)
-
-      var len = u1.length + u2.length < SLIDE_LIMIT ? u1.length + u2.length : SLIDE_LIMIT;
-      var result = image(krzysztof, 'last');
+      const len = pr.length + pl.length < SLIDE_LIMIT ? pr.length + pl.length : SLIDE_LIMIT;
+      var result = image(DEVIANT_LOGO, 'last') + image(DEVIANT_LOGO, 'last');
       for (let i = 0; i < len; i++) {
         const numb = Math.floor(Math.random() * 2) + 1
         if (numb === 1) {
-          if (u1.length > 0) {
-            result += image(u1.pop().image, 1)
+          if (pr.length > 0) {
+            result += image(pr.pop().image, 1)
           } else {
-            result += image(u2.pop().image, 2)
+            result += image(pl.pop().image, 2)
           }
         } else {
-          if (u2.length > 0) {
-            result += image(u2.pop().image, 2)
+          if (pl.length > 0) {
+            result += image(pl.pop().image, 2)
           } else {
-            result += image(u1.pop().image, 1)
+            result += image(pr.pop().image, 1)
           }
         }
       }
-      $('.wrap').html(
-        '<div id="tinderslide">' +
-        '<ul id="gallery">' +
-        result +
-        '</ul>' +
-        '</div>'
-        )
+      $('.wrap').html(`<div id="tinderslide"><ul id="gallery">${result}</ul></div>`);
       runTinder();
-      setPhoto(leftP, rightP);
+      setPhoto(left_profile, right_profile);
     })
     .catch(err => {
-      window['left'] = '';
+      left_user = '';
       runGame();
     })
   })
   .catch(err => {
-    window['right'] = '';
+    right_user = '';
     runGame();
   })
 }
@@ -164,7 +173,7 @@ function runTinder() {
   });
 }
 
-window['bar'] = new ProgressBar.Line('#progress', {
+var bar = new ProgressBar.Line('#progress', {
   strokeWidth: 4,
   easing: 'easeInOut',
   duration: 1400,
@@ -229,22 +238,5 @@ function setPhoto(left, right) {
   $('#tinderslide .like').css(obj(right))
   $('.actions .btn-like').css(obj(right));
 }
-
-$(document).keydown(function(e) {
-    switch(e.which) {
-        case 37: // left
-          $("#tinderslide").jTinder('dislike');
-          break;
-        // case 38: // up
-        // break;
-        case 39: // right
-          $("#tinderslide").jTinder('like');
-          break;
-        // case 40: // down
-        // break;
-        default: return; // exit this handler for other keys
-    }
-    e.preventDefault(); // prevent the default action (scroll / move caret)
-});
 
 runGame()
